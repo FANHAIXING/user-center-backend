@@ -115,7 +115,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String validPattern = "^\\w+$";
         Matcher matcher = Pattern.compile(validPattern).matcher(userAccount);
         if (!matcher.matches()) {
-            return null;
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "账号不包含特殊字符");
         }
 
         //2.加密
@@ -130,7 +130,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         //用户不存在
         if (user == null) {
             log.info("user login failed, userAccount cannot match userPassword");
-            return null;
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "用户不存在或密码错误");
         }
         //3.用户脱敏
         User safetyUser = getSafetyUser(user);
