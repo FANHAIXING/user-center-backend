@@ -64,6 +64,15 @@ public class UserController {
         return ResultUtils.success(user);
     }
 
+    @PostMapping("/logout")
+    public BaseResponse<Integer> userLogout(HttpServletRequest request){
+        if(request==null){
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"未登出");
+        }
+        int result = userService.userLogout(request);
+        return ResultUtils.success(result);
+    }
+
     @GetMapping("/current")
     public BaseResponse<User> getCurrentUser(HttpServletRequest request) {
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);

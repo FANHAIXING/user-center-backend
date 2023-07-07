@@ -41,6 +41,13 @@ public interface UserService extends IService<User> {
     User getSafetyUser(User originUser);
 
     /**
+     * 登出
+     * @param request
+     * @return
+     */
+    Integer userLogout(HttpServletRequest request);
+
+    /**
      * 查询用户信息
      * @param name
      * @return

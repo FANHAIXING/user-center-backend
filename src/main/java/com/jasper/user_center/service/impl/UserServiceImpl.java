@@ -41,7 +41,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword, String planetCode) {
         //1、校验
-        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword)) {
+        if (StringUtils.isAnyBlank(userAccount, userPassword, checkPassword, planetCode)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         if (userAccount.length() < 4) {
@@ -51,7 +51,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAM_ERROR, "密码过短");
         }
         if (planetCode.length() > 5) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "编号过短");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "编号过长");
         }
 
         // 账户不包含特殊字符
@@ -79,7 +79,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.eq("planetCode", planetCode);
         count = this.count(queryWrapper);
         if (count > 0) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR,"编号已存在");
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "编号已存在");
         }
 
         //2.加密
@@ -89,6 +89,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = new User();
         user.setUserAccount(userAccount);
         user.setUserPassword(encriptPassword);
+        user.setPlanetCode(planetCode);
 
         boolean saveResult = this.save(user);
         if (!saveResult) {
@@ -96,6 +97,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
         return user.getId();
     }
+
 
     @Override
     public User userLogin(String userAccount, String userPassword, HttpServletRequest request) {
@@ -161,6 +163,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         safetyUser.setCreateTime(originUser.getCreateTime());
         safetyUser.setPlanetCode(originUser.getPlanetCode());
         return safetyUser;
+    }
+
+    @Override
+    public Integer userLogout(HttpServletRequest request) {
+        request.getSession().removeAttribute(USER_LOGIN_STATE);
+        return 1;
     }
 
     @Override
