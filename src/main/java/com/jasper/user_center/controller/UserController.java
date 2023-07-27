@@ -65,9 +65,9 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    public BaseResponse<Integer> userLogout(HttpServletRequest request){
-        if(request==null){
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"未登出");
+    public BaseResponse<Integer> userLogout(HttpServletRequest request) {
+        if (request == null) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "未登出");
         }
         int result = userService.userLogout(request);
         return ResultUtils.success(result);

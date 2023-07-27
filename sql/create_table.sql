@@ -18,3 +18,5 @@ create table user
     planetCode   varchar(512)                       null comment '编号'
 )
     comment '用户';
+
+alter table user add COLUMN tags varchar(1024) null comment '标签列表';
