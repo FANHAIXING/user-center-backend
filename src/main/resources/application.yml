@@ -9,9 +9,6 @@ spring:
 #  session时效时间
   session:
     timeout: 86400
-#  mvc:
-#    pathmatch:
-#      matching-strategy: ANT_PATH_MATCHER  # 匹配路径，不然会报错， Failed to start bean ‘documentationPluginsBootstrapper‘
 
 server:
   port: 8080
