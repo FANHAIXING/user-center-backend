@@ -97,6 +97,13 @@ public class User implements Serializable {
      */
     private String planetCode;
 
+    /**
+     * 标签列表
+     */
+    @TableField(value = "tags")
+    private String tags;
+
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }
