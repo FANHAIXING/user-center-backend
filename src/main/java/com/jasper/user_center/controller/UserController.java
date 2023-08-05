@@ -10,6 +10,7 @@ import com.jasper.user_center.model.domain.request.UserLoginRequest;
 import com.jasper.user_center.model.domain.request.UserRegisterRequest;
 import com.jasper.user_center.service.UserService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -28,6 +29,7 @@ import static com.jasper.user_center.constant.UserConstant.USER_LOGIN_STATE;
 
 @RestController
 @RequestMapping("/user")
+@CrossOrigin(origins = {"http://localhost:3000"})
 public class UserController {
 
     @Resource
@@ -111,6 +113,14 @@ public class UserController {
             throw new BusinessException(ErrorCode.NULL_ERROR);
         }
         return ResultUtils.success(userService.removeById(id));
+    }
+    @GetMapping("/search/tags")
+    public BaseResponse<List<User>> searchUserByTags(@RequestParam(required=false) List<String> tagNameList){
+        if (CollectionUtils.isEmpty(tagNameList)){
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        List<User> userList = userService.searchUsersByTags(tagNameList);
+        return ResultUtils.success(userList);
     }
 
     /**

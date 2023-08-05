@@ -213,7 +213,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
             Set<String> tempTagNameSet = gson.fromJson(tagStr, new TypeToken<Set<String>>() {}.getType());
             tempTagNameSet = Optional.ofNullable(tempTagNameSet).orElse(new HashSet<>());
-            for (String tagName : tempTagNameSet) {
+            for (String tagName : tagNameList) {
                 if(!tagStr.contains(tagName)){
                     return false;
                 }
