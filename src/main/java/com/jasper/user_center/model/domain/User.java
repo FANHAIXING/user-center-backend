@@ -58,38 +58,32 @@ public class User implements Serializable {
     /**
      * 邮箱
      */
-    @TableField(value = "email")
     private String email;
 
     /**
      * 状态 0：正常
      */
-    @TableField(value = "useStatus")
     private Integer useStatus;
 
     /**
      * 创建日期
      */
-    @TableField(value = "createTime")
     private Date createTime;
 
     /**
      * 更新时间
      */
-    @TableField(value = "updateTime")
     private Date updateTime;
 
     /**
      * 是否删除
      */
     @TableLogic
-    @TableField(value = "isDelete")
     private Integer isDelete;
 
     /**
      * 用户角色 0-普通用户 1-管理员
      */
-    @TableField(value = "userRole")
     private Integer userRole;
 
     /**
@@ -100,8 +94,12 @@ public class User implements Serializable {
     /**
      * 标签列表
      */
-    @TableField(value = "tags")
     private String tags;
+
+    /**
+     * 个人简介
+     */
+    private String profile;
 
 
     @TableField(exist = false)

@@ -92,7 +92,7 @@ public class UserController {
 
     @GetMapping("/search")
     public BaseResponse<List<User>> searchUsers(String name, HttpServletRequest request) {
-        if (!isAdmin(request)) {
+        if (!userService.isAdmin(request)) {
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -104,16 +104,6 @@ public class UserController {
         return ResultUtils.success(list);
     }
 
-    @PostMapping("/delete")
-    public BaseResponse<Boolean> deleteUsers(@RequestBody long id, HttpServletRequest request) {
-        if (!isAdmin(request)) {
-            throw new BusinessException(ErrorCode.NO_AUTH);
-        }
-        if (id < 0) {
-            throw new BusinessException(ErrorCode.NULL_ERROR);
-        }
-        return ResultUtils.success(userService.removeById(id));
-    }
     @GetMapping("/search/tags")
     public BaseResponse<List<User>> searchUserByTags(@RequestParam(required=false) List<String> tagNameList){
         if (CollectionUtils.isEmpty(tagNameList)){
@@ -123,16 +113,27 @@ public class UserController {
         return ResultUtils.success(userList);
     }
 
-    /**
-     * 是否为管理员
-     *
-     * @param request
-     * @return
-     */
-    private boolean isAdmin(HttpServletRequest request) {
-        //鉴权
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
-        User user = (User) userObj;
-        return user != null && user.getUserRole() == ADMIN_ROLE;
+    @PostMapping("/update")
+    public BaseResponse<Integer> updateUser(@RequestBody User user, HttpServletRequest request){
+        //校验参数是否为空
+        if(user==null){
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+
+        User loginUser = userService.getLoginUser(request);
+        Integer result = userService.updateUser(user,loginUser);
+        return ResultUtils.success(result);
     }
+
+    @PostMapping("/delete")
+    public BaseResponse<Boolean> deleteUsers(@RequestBody long id, HttpServletRequest request) {
+        if (!userService.isAdmin(request)) {
+            throw new BusinessException(ErrorCode.NO_AUTH);
+        }
+        if (id < 0) {
+            throw new BusinessException(ErrorCode.NULL_ERROR);
+        }
+        return ResultUtils.success(userService.removeById(id));
+    }
+
 }

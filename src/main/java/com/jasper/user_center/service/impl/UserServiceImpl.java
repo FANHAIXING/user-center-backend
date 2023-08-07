@@ -3,9 +3,9 @@ package com.jasper.user_center.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
-import com.google.gson.TypeAdapter;
 import com.google.gson.reflect.TypeToken;
 import com.jasper.user_center.common.ErrorCode;
+import com.jasper.user_center.constant.UserConstant;
 import com.jasper.user_center.exception.BusinessException;
 import com.jasper.user_center.mapper.UserMapper;
 import com.jasper.user_center.model.domain.User;
@@ -18,14 +18,12 @@ import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.jasper.user_center.constant.UserConstant.ADMIN_ROLE;
 import static com.jasper.user_center.constant.UserConstant.USER_LOGIN_STATE;
 
 /**
@@ -105,7 +103,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return user.getId();
     }
 
-
     @Override
     public User userLogin(String userAccount, String userPassword, HttpServletRequest request) {
         //1、校验
@@ -154,7 +151,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @param originUser
      * @return
      */
-
     @Override
     public User getSafetyUser(User originUser) {
         User safetyUser = new User();
@@ -191,12 +187,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     /**
      * 根据标签搜索用户（内存过滤）
+     *
      * @param tagNameList 用户要拥有的标签
      * @return
      */
     @Override
-    public List<User> searchUsersByTags(List<String> tagNameList){
-        if(CollectionUtils.isEmpty(tagNameList)){
+    public List<User> searchUsersByTags(List<String> tagNameList) {
+        if (CollectionUtils.isEmpty(tagNameList)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
@@ -208,13 +205,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         //内存中判断是否包含要求标签
         return userList.stream().filter(user -> {
             String tagStr = user.getTags();
-            if (StringUtils.isBlank(tagStr)){
+            if (StringUtils.isBlank(tagStr)) {
                 return false;
             }
-            Set<String> tempTagNameSet = gson.fromJson(tagStr, new TypeToken<Set<String>>() {}.getType());
+            Set<String> tempTagNameSet = gson.fromJson(tagStr, new TypeToken<Set<String>>() {
+            }.getType());
             tempTagNameSet = Optional.ofNullable(tempTagNameSet).orElse(new HashSet<>());
             for (String tagName : tagNameList) {
-                if(!tagStr.contains(tagName)){
+                if (!tagStr.contains(tagName)) {
                     return false;
                 }
             }
@@ -222,20 +220,73 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }).map(this::getSafetyUser).collect(Collectors.toList());
     }
 
+    @Override
+    public int updateUser(User user, User loginUser) {
+        long userId = loginUser.getId();
+        if (userId <= 0) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        //如果是管理员，允许更新任意用户
+        if (isAdmin(loginUser)) {
+            User oldUser = userMapper.selectById(userId);
+            if (oldUser == null){
+                throw new BusinessException(ErrorCode.NULL_ERROR);
+            }
+             return userMapper.updateById(user);
+        }
+        //如果是用户自己，允许更新自己
+        if (!loginUser.getId().equals(user.getId())){
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        return userMapper.updateById(user);
+    }
+
+    @Override
+    public User getLoginUser(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        if (userObj == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGIN);
+        }
+        return (User) userObj;
+    }
+
     /**
-     * 根据标签查用户（SQL）
-     * @param tagNameList 用户标签列表
+     * 是否为管理员
+     *
+     * @param request
      * @return
      */
+    @Override
+    public boolean isAdmin(HttpServletRequest request) {
+        //鉴权
+        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        User user = (User) userObj;
+        return user != null && user.getUserRole() == UserConstant.ADMIN_ROLE;
+    }
+
+    @Override
+    public boolean isAdmin(User loginUser) {
+        return loginUser != null && loginUser.getUserRole() == ADMIN_ROLE;
+    }
+
+    /**
+     * 根据标签查用户（SQL）
+     *
+     * @param tagNameList 用户标签列表
+     * @return List<User>
+     */
     @Deprecated
-    public List<User> searchUsersByTagsBySQL(List<String> tagNameList){
-        if(CollectionUtils.isEmpty(tagNameList)){
+    public List<User> searchUsersByTagsBySQL(List<String> tagNameList) {
+        if (CollectionUtils.isEmpty(tagNameList)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         //拼接and查询
         for (String tagName : tagNameList) {
-            queryWrapper = queryWrapper.like("tags",tagName);
+            queryWrapper = queryWrapper.like("tags", tagName);
         }
         List<User> userList = userMapper.selectList(queryWrapper);
 

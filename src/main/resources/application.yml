@@ -23,7 +23,11 @@ server:
     context-path: /api
     session:
       cookie:
-        domain:
+        domain: localhost
+
+logging:
+  level:
+    sql: debug
 
 mybatis-plus:
   configuration:
