@@ -11,11 +11,19 @@ spring:
 #  session时效时间
   session:
     timeout: 86400
+    store-type: redis
+  redis:
+    port: 6379
+    host: localhost
+    database: 0
 
 server:
   port: 8080
   servlet:
     context-path: /api
+    session:
+      cookie:
+        domain:
 
 mybatis-plus:
   configuration:
