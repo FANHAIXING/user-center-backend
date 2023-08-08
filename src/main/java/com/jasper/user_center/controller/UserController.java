@@ -89,7 +89,6 @@ public class UserController {
         return ResultUtils.success(safetyUser);
     }
 
-
     @GetMapping("/search")
     public BaseResponse<List<User>> searchUsers(String name, HttpServletRequest request) {
         if (!userService.isAdmin(request)) {
@@ -99,6 +98,14 @@ public class UserController {
         if (StringUtils.isNotBlank(name)) {
             queryWrapper.like("username", name);
         }
+        List<User> userList = userService.list(queryWrapper);
+        List<User> list = userList.stream().map(user -> userService.getSafetyUser(user)).collect(Collectors.toList());
+        return ResultUtils.success(list);
+    }
+
+    @GetMapping("/recommend")
+    public BaseResponse<List<User>> recommendUsers( HttpServletRequest request) {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         List<User> userList = userService.list(queryWrapper);
         List<User> list = userList.stream().map(user -> userService.getSafetyUser(user)).collect(Collectors.toList());
         return ResultUtils.success(list);
