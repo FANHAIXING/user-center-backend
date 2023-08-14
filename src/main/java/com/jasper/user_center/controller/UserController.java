@@ -1,6 +1,8 @@
 package com.jasper.user_center.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jasper.user_center.common.BaseResponse;
 import com.jasper.user_center.common.ErrorCode;
 import com.jasper.user_center.common.ResultUtils;
@@ -9,13 +11,18 @@ import com.jasper.user_center.model.domain.User;
 import com.jasper.user_center.model.domain.request.UserLoginRequest;
 import com.jasper.user_center.model.domain.request.UserRegisterRequest;
 import com.jasper.user_center.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.expression.spel.ast.NullLiteral;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.jasper.user_center.constant.UserConstant.ADMIN_ROLE;
@@ -30,10 +37,14 @@ import static com.jasper.user_center.constant.UserConstant.USER_LOGIN_STATE;
 @RestController
 @RequestMapping("/user")
 @CrossOrigin(origins = {"http://localhost:3000"})
+@Slf4j
 public class UserController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private RedisTemplate<String, Object> redisTemplate;
 
     @PostMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
@@ -104,16 +115,30 @@ public class UserController {
     }
 
     @GetMapping("/recommend")
-    public BaseResponse<List<User>> recommendUsers( HttpServletRequest request) {
+    public BaseResponse<Page<User>> recommendUsers(long pageSize, long pageNumber, HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        String redisKey = String.format("Jasper:user:recommend:%s", loginUser.getId());
+        ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
+        //查缓存
+        Page<User> userPage = (Page<User>) valueOperations.get(redisKey);
+        if (userPage != null){
+            return ResultUtils.success(userPage);
+        }
+        //无缓存，查库
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-        List<User> userList = userService.list(queryWrapper);
-        List<User> list = userList.stream().map(user -> userService.getSafetyUser(user)).collect(Collectors.toList());
-        return ResultUtils.success(list);
+        userPage = userService.page(new Page<>(pageNumber, pageSize), queryWrapper);
+        //写缓存
+        try {
+            valueOperations.set(redisKey, userPage,10000, TimeUnit.MILLISECONDS);
+        } catch (Exception e) {
+            log.error("Redis set key error",e);
+        }
+        return ResultUtils.success(userPage);
     }
 
     @GetMapping("/search/tags")
-    public BaseResponse<List<User>> searchUserByTags(@RequestParam(required=false) List<String> tagNameList){
-        if (CollectionUtils.isEmpty(tagNameList)){
+    public BaseResponse<List<User>> searchUserByTags(@RequestParam(required = false) List<String> tagNameList) {
+        if (CollectionUtils.isEmpty(tagNameList)) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         List<User> userList = userService.searchUsersByTags(tagNameList);
@@ -121,14 +146,14 @@ public class UserController {
     }
 
     @PostMapping("/update")
-    public BaseResponse<Integer> updateUser(@RequestBody User user, HttpServletRequest request){
+    public BaseResponse<Integer> updateUser(@RequestBody User user, HttpServletRequest request) {
         //校验参数是否为空
-        if(user==null){
+        if (user == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
 
         User loginUser = userService.getLoginUser(request);
-        Integer result = userService.updateUser(user,loginUser);
+        Integer result = userService.updateUser(user, loginUser);
         return ResultUtils.success(result);
     }
 
