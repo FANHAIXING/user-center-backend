@@ -1,10 +1,12 @@
-package com.jasper.user_center.model.domain;
+package generator.domain;
 
-import com.baomidou.mybatisplus.annotation.*;
-import lombok.Data;
-
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
+import lombok.Data;
 
 /**
  * 用户队伍关系
@@ -47,7 +49,6 @@ public class UserTeam implements Serializable {
     /**
      * 是否删除
      */
-    @TableLogic
     private Integer isDelete;
 
     @TableField(exist = false)
