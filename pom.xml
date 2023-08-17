@@ -17,6 +17,12 @@
         <java.version>8</java.version>
     </properties>
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.springframework.session/spring-session-data-redis -->
         <dependency>
             <groupId>org.springframework.session</groupId>
@@ -124,8 +130,8 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>9</source>
-                    <target>9</target>
+                    <source>14</source>
+                    <target>14</target>
                 </configuration>
             </plugin>
         </plugins>
