@@ -9,6 +9,7 @@ import com.jasper.user_center.exception.BusinessException;
 import com.jasper.user_center.model.domain.Team;
 import com.jasper.user_center.model.domain.User;
 import com.jasper.user_center.model.dto.TeamQuery;
+import com.jasper.user_center.model.request.TeamAddRequest;
 import com.jasper.user_center.model.request.UserLoginRequest;
 import com.jasper.user_center.model.request.UserRegisterRequest;
 import com.jasper.user_center.service.TeamService;
@@ -51,15 +52,19 @@ public class TeamController {
 
 
     @PostMapping("/add")
-    public BaseResponse<Long> addTeam(@RequestBody Team team) {
-        if (team == null) {
+    public BaseResponse<Long> addTeam(@RequestBody TeamAddRequest teamAddRequest, HttpServletRequest request) {
+        if (teamAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
-        boolean save = teamService.save(team);
-        if (!save) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "插入失败");
+        Team team = new Team();
+        try {
+            BeanUtils.copyProperties(team,teamAddRequest);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        return ResultUtils.success(team.getId());
+        User loginUser = userService.getLoginUser(request);
+        Long teamId = teamService.addTeam(team, loginUser);
+        return ResultUtils.success(teamId);
     }
 
     @PostMapping("/delete")
@@ -127,7 +132,7 @@ public class TeamController {
         }
         QueryWrapper<Team> queryWrapper = new QueryWrapper<>(team);
         Page<Team> page = new Page<>(teamQuery.getPageNum(), teamQuery.getPageSize());
-        Page<Team> resultPage  = teamService.page(page, queryWrapper);
+        Page<Team> resultPage = teamService.page(page, queryWrapper);
         return ResultUtils.success(resultPage);
     }
 }

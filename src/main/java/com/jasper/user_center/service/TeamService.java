@@ -2,6 +2,7 @@ package com.jasper.user_center.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jasper.user_center.model.domain.Team;
+import com.jasper.user_center.model.domain.User;
 
 /**
 * @author Jasper
@@ -9,5 +10,13 @@ import com.jasper.user_center.model.domain.Team;
 * @createDate 2023-08-17 15:44:25
 */
 public interface TeamService extends IService<Team> {
+
+    /**
+     * 创建队伍
+     * @param team
+     * @param loginUser
+     * @return
+     */
+    Long addTeam(Team team, User loginUser);
 
 }
