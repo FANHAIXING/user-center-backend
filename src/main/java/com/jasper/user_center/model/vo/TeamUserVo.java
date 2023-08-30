@@ -1,35 +1,29 @@
-package com.jasper.user_center.model.dto;
+package com.jasper.user_center.model.vo;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.jasper.user_center.common.PageRequest;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.io.Serial;
+import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
- * 队伍查询封装类
+ * 队伍和用户信息封装类
  * @author Jasper
- * @create 2023-08-17 23:56
+ * @create 2023-08-30 15:10
  */
-@EqualsAndHashCode(callSuper = true)
 @Data
-public class TeamQuery extends PageRequest {
+public class TeamUserVo implements Serializable {
     @Serial
-    private static final long serialVersionUID = 768702861294562082L;
+    private static final long serialVersionUID = -3818404495644926101L;
     /**
      * id
      */
     private Long id;
-
-    /**
-     * 搜索关键词（同事对队伍名称和描述搜索）
-     */
-    private String searchText;
 
     /**
      * 队伍名称
@@ -46,6 +40,10 @@ public class TeamQuery extends PageRequest {
      */
     private Integer maxNum;
 
+    /**
+     * 过期时间
+     */
+    private Date expireTime;
 
     /**
      * 用户id
@@ -56,4 +54,19 @@ public class TeamQuery extends PageRequest {
      * 0 - 公开，1 - 私有，2 - 加密
      */
     private Integer status;
+
+    /**
+     * 创建时间
+     */
+    private Date createTime;
+
+    /**
+     *更新时间
+     */
+    private Date updateTime;
+
+    /**
+     * 创建人用户信息
+     */
+    UserVo createUser;
 }

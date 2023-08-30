@@ -3,6 +3,10 @@ package com.jasper.user_center.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jasper.user_center.model.domain.Team;
 import com.jasper.user_center.model.domain.User;
+import com.jasper.user_center.model.dto.TeamQuery;
+import com.jasper.user_center.model.vo.TeamUserVo;
+
+import java.util.List;
 
 /**
 * @author Jasper
@@ -19,4 +23,11 @@ public interface TeamService extends IService<Team> {
      */
     Long addTeam(Team team, User loginUser);
 
+    /**
+     * 搜索队伍
+     * @param teamQuery
+     * @param loginUser
+     * @return
+     */
+    List<TeamUserVo> listTeams(TeamQuery teamQuery,boolean isAdmin);
 }

@@ -3,21 +3,27 @@ package com.jasper.user_center.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jasper.user_center.common.ErrorCode;
-import com.jasper.user_center.enums.TeamStatusEnum;
+import com.jasper.user_center.model.dto.TeamQuery;
+import com.jasper.user_center.model.enums.TeamStatusEnum;
 import com.jasper.user_center.exception.BusinessException;
 import com.jasper.user_center.model.domain.Team;
 import com.jasper.user_center.mapper.TeamMapper;
 import com.jasper.user_center.model.domain.User;
 import com.jasper.user_center.model.domain.UserTeam;
+import com.jasper.user_center.model.vo.TeamUserVo;
+import com.jasper.user_center.model.vo.UserVo;
 import com.jasper.user_center.service.TeamService;
+import com.jasper.user_center.service.UserService;
 import com.jasper.user_center.service.UserTeamService;
+import lombok.SneakyThrows;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * @author Jasper
@@ -30,6 +36,9 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
 
     @Resource
     private UserTeamService userTeamService;
+
+    @Resource
+    private UserService userService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -101,6 +110,77 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "创建队伍失败");
         }
         return teamId;
+    }
+
+    @SneakyThrows
+    @Override
+    public List<TeamUserVo> listTeams(TeamQuery teamQuery, boolean isAdmin) {
+        QueryWrapper<Team> queryWrapper = new QueryWrapper<>();
+        // 组合查询条件
+        if (queryWrapper == null) {
+            Long id = teamQuery.getId();
+            if (id != null && id > 0) {
+                queryWrapper.eq("id", 0);
+            }
+
+            String searchText = teamQuery.getSearchText();
+            if (StringUtils.isNotBlank(searchText)) {
+                queryWrapper.and(qw -> qw.like("name", searchText).or().like("description", searchText));
+            }
+            String name = teamQuery.getName();
+            if (StringUtils.isNotBlank(name)) {
+                queryWrapper.like("name", name);
+            }
+            String description = teamQuery.getDescription();
+            if (StringUtils.isNotBlank(description)) {
+                queryWrapper.like("description", description);
+            }
+            // 查询最大人数相等
+            Integer maxNum = teamQuery.getMaxNum();
+            if (maxNum != null && maxNum > 0) {
+                queryWrapper.eq("maxNum", maxNum);
+            }
+            // 根据创建人查询
+            Long userId = teamQuery.getUserId();
+            if (userId != null && userId > 0) {
+                queryWrapper.eq("userId", userId);
+            }
+            // 根据状态查询
+            Integer status = teamQuery.getStatus();
+            TeamStatusEnum statusEnum = TeamStatusEnum.getEnumByValue(status);
+            if (statusEnum == null){
+                statusEnum = TeamStatusEnum.PUBLIC;
+            }
+            if (!isAdmin && !statusEnum.equals(TeamStatusEnum.PUBLIC)){
+                throw new BusinessException(ErrorCode.NO_AUTH);
+            }
+                queryWrapper.eq("status", statusEnum.getValue());
+        }
+
+        // 不展示已过期的队伍
+        List<Team> teamList = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(teamList)) {
+            return new ArrayList<>();
+        }
+
+        List<TeamUserVo> teamUserVoList = new ArrayList<>();
+        //关联查询创建人用户信息
+        for (Team team : teamList) {
+            Long userId = team.getUserId();
+            if (userId == null) {
+                continue;
+            }
+            User user = userService.getById(userId);
+            User safetyUser = userService.getSafetyUser(user);
+            TeamUserVo teamUserVo = new TeamUserVo();
+            BeanUtils.copyProperties(teamUserVo, team);
+            //脱敏用户信息
+            UserVo userVo = new UserVo();
+            BeanUtils.copyProperties(userVo, user);
+            teamUserVo.setCreateUser(userVo);
+            teamUserVoList.add(teamUserVo);
+        }
+        return teamUserVoList;
     }
 }
 

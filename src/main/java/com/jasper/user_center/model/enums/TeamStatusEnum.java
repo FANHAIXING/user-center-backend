@@ -1,4 +1,4 @@
-package com.jasper.user_center.enums;
+package com.jasper.user_center.model.enums;
 
 /**
  * @author Jasper

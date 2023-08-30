@@ -12,6 +12,7 @@ import com.jasper.user_center.model.dto.TeamQuery;
 import com.jasper.user_center.model.request.TeamAddRequest;
 import com.jasper.user_center.model.request.UserLoginRequest;
 import com.jasper.user_center.model.request.UserRegisterRequest;
+import com.jasper.user_center.model.vo.TeamUserVo;
 import com.jasper.user_center.service.TeamService;
 import com.jasper.user_center.service.UserService;
 import jodd.bean.BeanUtil;
@@ -58,7 +59,7 @@ public class TeamController {
         }
         Team team = new Team();
         try {
-            BeanUtils.copyProperties(team,teamAddRequest);
+            BeanUtils.copyProperties(team, teamAddRequest);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -103,19 +104,30 @@ public class TeamController {
         return ResultUtils.success(byId);
     }
 
+//    @GetMapping("/list")
+//    public BaseResponse<List<Team>> listTeams(TeamQuery teamQuery) {
+//        if (teamQuery == null) {
+//            throw new BusinessException(ErrorCode.PARAM_ERROR);
+//        }
+//        Team team = new Team();
+//        try {
+//            BeanUtils.copyProperties(team, teamQuery);
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//        QueryWrapper<Team> queryWrapper = new QueryWrapper<>(team);
+//        List<Team> list = teamService.list(queryWrapper);
+//        return ResultUtils.success(list);
+//    }
+
+
     @GetMapping("/list")
-    public BaseResponse<List<Team>> listTeams(TeamQuery teamQuery) {
+    public BaseResponse<List<TeamUserVo>> listTeams(TeamQuery teamQuery, HttpServletRequest request) {
         if (teamQuery == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
-        Team team = new Team();
-        try {
-            BeanUtils.copyProperties(team, teamQuery);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        QueryWrapper<Team> queryWrapper = new QueryWrapper<>(team);
-        List<Team> list = teamService.list(queryWrapper);
+        boolean isAdmin = userService.isAdmin(request);
+        List<TeamUserVo> list = teamService.listTeams(teamQuery, isAdmin);
         return ResultUtils.success(list);
     }
 
