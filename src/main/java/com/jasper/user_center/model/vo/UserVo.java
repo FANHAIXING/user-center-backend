@@ -4,7 +4,10 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
+import lombok.Data;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -12,7 +15,10 @@ import java.util.Date;
  * @author Jasper
  * @create 2023-08-30 15:13
  */
-public class UserVo {
+@Data
+public class UserVo implements Serializable {
+    @Serial
+    private static final long serialVersionUID = -4700118564360298958L;
     /**
      *
      */

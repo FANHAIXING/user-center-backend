@@ -107,13 +107,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public User userLogin(String userAccount, String userPassword, HttpServletRequest request) {
         //1、校验
         if (StringUtils.isAnyBlank(userAccount, userPassword)) {
-            return null;
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "账号密码输入为空！");
         }
         if (userAccount.length() < 4) {
-            return null;
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "用户账号必须大于4位");
         }
         if (userPassword.length() < 8) {
-            return null;
+            throw new BusinessException(ErrorCode.PARAM_ERROR, "密码必须大于8位");
         }
         // 账户不包含特殊字符
         String validPattern = "^\\w+$";
@@ -229,13 +229,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         //如果是管理员，允许更新任意用户
         if (isAdmin(loginUser)) {
             User oldUser = userMapper.selectById(userId);
-            if (oldUser == null){
+            if (oldUser == null) {
                 throw new BusinessException(ErrorCode.NULL_ERROR);
             }
-             return userMapper.updateById(user);
+            return userMapper.updateById(user);
         }
         //如果是用户自己，允许更新自己
-        if (!loginUser.getId().equals(user.getId())){
+        if (!loginUser.getId().equals(user.getId())) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         return userMapper.updateById(user);

@@ -116,13 +116,12 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
     @Override
     public List<TeamUserVo> listTeams(TeamQuery teamQuery, boolean isAdmin) {
         QueryWrapper<Team> queryWrapper = new QueryWrapper<>();
-        // 组合查询条件
-        if (queryWrapper == null) {
+         // 组合查询条件
+        if (teamQuery != null) {
             Long id = teamQuery.getId();
             if (id != null && id > 0) {
-                queryWrapper.eq("id", 0);
+                queryWrapper.eq("id", id);
             }
-
             String searchText = teamQuery.getSearchText();
             if (StringUtils.isNotBlank(searchText)) {
                 queryWrapper.and(qw -> qw.like("name", searchText).or().like("description", searchText));
@@ -156,8 +155,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             }
                 queryWrapper.eq("status", statusEnum.getValue());
         }
-
         // 不展示已过期的队伍
+        queryWrapper.and(qw->qw.gt("expireTime",new Date()).or().isNull("expireTime"));
         List<Team> teamList = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(teamList)) {
             return new ArrayList<>();
@@ -171,13 +170,14 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
                 continue;
             }
             User user = userService.getById(userId);
-            User safetyUser = userService.getSafetyUser(user);
             TeamUserVo teamUserVo = new TeamUserVo();
             BeanUtils.copyProperties(teamUserVo, team);
             //脱敏用户信息
-            UserVo userVo = new UserVo();
-            BeanUtils.copyProperties(userVo, user);
-            teamUserVo.setCreateUser(userVo);
+            if (user!=null) {
+                UserVo userVo = new UserVo();
+                BeanUtils.copyProperties(userVo, user);
+                teamUserVo.setCreateUser(userVo);
+            }
             teamUserVoList.add(teamUserVo);
         }
         return teamUserVoList;
