@@ -8,13 +8,17 @@ import java.util.Date;
 
 /**
  * @author Jasper
- * @create 2023-08-18 13:17
+ * @create 2023-09-03 14:23
  */
 @Data
-public class TeamAddRequest implements Serializable{
+public class TeamUpdateRequest implements Serializable {
 
     @Serial
-    private static final long serialVersionUID = -381580401572643990L;
+    private static final long serialVersionUID = -2534341830816333382L;
+    /**
+     * id
+     */
+    private Long id;
 
     /**
      * 队伍名称
@@ -25,11 +29,6 @@ public class TeamAddRequest implements Serializable{
      * 描述
      */
     private String description;
-
-    /**
-     * 最大人数
-     */
-    private Integer maxNum;
 
     /**
      * 过期时间

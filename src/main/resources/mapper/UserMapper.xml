@@ -31,4 +31,12 @@
         userRole,planetCode,tags,
         profile
     </sql>
+
+    <select id="getMemberUsersByTeamId" resultType="com.jasper.user_center.model.domain.User">
+        SELECT u.*
+        FROM user_team ut
+                 INNER JOIN user u ON ut.userId = u.id
+        WHERE ut.teamId = #{teamId}
+          AND ut.isDelete = 0
+    </select>
 </mapper>

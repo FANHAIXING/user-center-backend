@@ -2,6 +2,7 @@ package com.jasper.user_center.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.jasper.user_center.model.domain.UserTeam;
+import org.mapstruct.Mapper;
 
 /**
 * @author Jasper

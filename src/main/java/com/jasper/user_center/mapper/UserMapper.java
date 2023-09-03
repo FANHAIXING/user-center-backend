@@ -3,6 +3,8 @@ package com.jasper.user_center.mapper;
 import com.jasper.user_center.model.domain.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import java.util.List;
+
 /**
 * @author Jasper
 * @description 针对表【user(用户)】的数据库操作Mapper
@@ -10,7 +12,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @Entity generator.domain.User
 */
 public interface UserMapper extends BaseMapper<User> {
-
+    List<User> getMemberUsersByTeamId(long teamId);
 }
 
 
