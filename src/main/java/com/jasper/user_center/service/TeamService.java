@@ -5,6 +5,7 @@ import com.jasper.user_center.model.domain.Team;
 import com.jasper.user_center.model.domain.User;
 import com.jasper.user_center.model.dto.TeamQuery;
 import com.jasper.user_center.model.request.TeamJoinRequest;
+import com.jasper.user_center.model.request.TeamQuitRequest;
 import com.jasper.user_center.model.request.TeamUpdateRequest;
 import com.jasper.user_center.model.vo.TeamUserVo;
 
@@ -46,4 +47,21 @@ public interface TeamService extends IService<Team> {
      * @param loginUser
      */
     boolean joinTeam(TeamJoinRequest teamJoinRequest, User loginUser);
+
+    /**
+     * 退出队伍
+     * @param teamQuitRequest
+     * @param loginUser
+     * @return
+     */
+    boolean quitTeam(TeamQuitRequest teamQuitRequest, User loginUser);
+
+    /**
+     * 队长解散队伍
+     *
+     * @param id
+     * @param loginUser
+     * @return
+     */
+    boolean deleteTeam(long id, User loginUser);
 }
