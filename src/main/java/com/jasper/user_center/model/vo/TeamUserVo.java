@@ -20,6 +20,10 @@ import java.util.List;
 public class TeamUserVo implements Serializable {
     @Serial
     private static final long serialVersionUID = -3818404495644926101L;
+    /**
+     * 队伍Id
+     */
+    private Long id;
 
     /**
      * 队伍名称

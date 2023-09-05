@@ -124,13 +124,17 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
 
     @SneakyThrows
     @Override
-    public List<TeamUserVo> listTeams(TeamQuery teamQuery, boolean isAdmin) {
+    public List<TeamUserVo> listTeams(TeamQuery teamQuery, User loginUser) {
         QueryWrapper<Team> queryWrapper = new QueryWrapper<>();
         // 组合查询条件
         if (teamQuery != null) {
             Long id = teamQuery.getId();
             if (id != null && id > 0) {
                 queryWrapper.eq("id", id);
+            }
+            List<Long> idlist = teamQuery.getIdList();
+            if (!CollectionUtils.isEmpty(idlist)) {
+                queryWrapper.in("id", idlist);
             }
             String searchText = teamQuery.getSearchText();
             if (StringUtils.isNotBlank(searchText)) {
@@ -157,13 +161,21 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             // 根据状态查询
             Integer status = teamQuery.getStatus();
             TeamStatusEnum statusEnum = TeamStatusEnum.getEnumByValue(status);
+            boolean isAdmin = userService.isAdmin(loginUser);
             if (statusEnum == null) {
                 statusEnum = TeamStatusEnum.PUBLIC;
+            } else {
+                if (statusEnum == TeamStatusEnum.PUBLIC){
+                    queryWrapper.eq("status", statusEnum.getValue());
+                } else if (statusEnum == TeamStatusEnum.PRIVATE) {
+                    if (!isAdmin&&!Objects.equals(teamQuery.getUserId(), loginUser.getId())){
+                        throw new BusinessException(ErrorCode.NO_AUTH);
+                    }
+                    queryWrapper.eq("status", statusEnum.getValue());
+                } else if (statusEnum == TeamStatusEnum.SECRET) {
+                    queryWrapper.eq("status", statusEnum.getValue());
+                }
             }
-            if (!isAdmin && !statusEnum.equals(TeamStatusEnum.PUBLIC)) {
-                throw new BusinessException(ErrorCode.NO_AUTH);
-            }
-            queryWrapper.eq("status", statusEnum.getValue());
         }
         // 不展示已过期的队伍
         queryWrapper.and(qw -> qw.gt("expireTime", new Date()).or().isNull("expireTime"));
@@ -343,8 +355,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
         userTeamQueryWrapper.eq("teamId", teamId);
         boolean result = userTeamService.remove(userTeamQueryWrapper);
-        if (!result){
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"删除队伍关联信息失败");
+        if (!result) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除队伍关联信息失败");
         }
         // 删除队伍
         return this.removeById(team);
@@ -377,6 +389,14 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
         userTeamQueryWrapper.eq("teamId", teamId);
         return userTeamService.count(userTeamQueryWrapper);
+    }
+
+    private boolean isMember(long teamId, long userId) {
+        QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("teamId", teamId);
+        queryWrapper.eq("userId", userId);
+        long count = userTeamService.count(queryWrapper);
+        return count > 0;
     }
 }
 
