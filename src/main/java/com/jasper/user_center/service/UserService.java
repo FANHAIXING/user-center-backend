@@ -2,6 +2,7 @@ package com.jasper.user_center.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.jasper.user_center.model.domain.User;
+import com.jasper.user_center.model.vo.UserVo;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -76,4 +77,14 @@ public interface UserService extends IService<User> {
     boolean isAdmin(HttpServletRequest request);
 
     boolean isAdmin(User loginUser);
+
+    /**
+     * 匹配用户
+     * @param num
+     * @param loginUser
+     * @return
+     */
+    List<UserVo> matchUsers(long num, User loginUser);
+
+    UserVo getUserVO(User user);
 }

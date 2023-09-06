@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.jasper.user_center.model.domain.User;
 import lombok.Data;
 
 import java.io.Serial;
@@ -94,7 +95,6 @@ public class UserVo implements Serializable {
      * 个人简介
      */
     private String profile;
-
 
 
 }

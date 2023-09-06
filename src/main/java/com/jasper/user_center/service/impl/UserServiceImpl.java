@@ -1,5 +1,7 @@
 package com.jasper.user_center.service.impl;
 
+import java.util.ArrayList;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
@@ -9,7 +11,9 @@ import com.jasper.user_center.constant.UserConstant;
 import com.jasper.user_center.exception.BusinessException;
 import com.jasper.user_center.mapper.UserMapper;
 import com.jasper.user_center.model.domain.User;
+import com.jasper.user_center.model.vo.UserVo;
 import com.jasper.user_center.service.UserService;
+import com.jasper.user_center.utils.AlgorithmUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -273,6 +277,41 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
+     * 匹配用户列表
+     *
+     * @param num
+     * @param loginUser
+     * @return
+     */
+    @Override
+    public List<UserVo> matchUsers(long num, User loginUser) {
+        List<UserVo> userVolist = new ArrayList<>();
+        List<User> userList = this.list();
+        String tags = loginUser.getTags();
+        Gson gson = new Gson();
+        List<String> tagList = gson.fromJson(tags, new TypeToken<List<String>>() {
+        }.getType());
+        //用户列表的下标 => 相似度
+        SortedMap<Integer, Long> indexDistanceMap = new TreeMap<>();
+
+        for (int i = 0; i < userList.size(); i++) {
+            User user = userList.get(i);
+            String userTags = user.getTags();
+            if (StringUtils.isBlank(userTags)) {
+                continue;
+            }
+            List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {
+            }.getType());
+            //计算分数
+            long distance = AlgorithmUtils.minDistance(tagList, userTagList);
+            indexDistanceMap.put(i, distance);
+        }
+        List<Integer> maxDistanceIndexList = indexDistanceMap.keySet().stream().limit(num).collect(Collectors.toList());
+        List<UserVo> userVoList = maxDistanceIndexList.stream().map(index -> getUserVO(userList.get(index))).collect(Collectors.toList());
+        return userVolist;
+    }
+
+    /**
      * 根据标签查用户（SQL）
      *
      * @param tagNameList 用户标签列表
@@ -293,6 +332,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return userList.stream().map(this::getSafetyUser).collect(Collectors.toList());
     }
 
+    @Override
+    public UserVo getUserVO(User user) {
+        UserVo userVo = new UserVo();
+        userVo.setUserAccount(user.getUserAccount());
+        userVo.setUserRole(user.getUserRole());
+        userVo.setId(user.getId());
+        userVo.setEmail(user.getEmail());
+        userVo.setGender(user.getGender());
+        userVo.setPhone(user.getPhone());
+        userVo.setAvatarUrl(user.getAvatarUrl());
+        userVo.setTags(user.getTags());
+        userVo.setProfile(user.getProfile());
+        userVo.setCreateTime(user.getCreateTime());
+        userVo.setPlanetCode(user.getPlanetCode());
+        userVo.setUseStatus(user.getUseStatus());
+        userVo.setUpdateTime(user.getUpdateTime());
+        return userVo;
+    }
 }
 
 

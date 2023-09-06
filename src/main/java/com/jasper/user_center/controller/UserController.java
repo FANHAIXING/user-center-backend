@@ -9,6 +9,7 @@ import com.jasper.user_center.exception.BusinessException;
 import com.jasper.user_center.model.domain.User;
 import com.jasper.user_center.model.request.UserLoginRequest;
 import com.jasper.user_center.model.request.UserRegisterRequest;
+import com.jasper.user_center.model.vo.UserVo;
 import com.jasper.user_center.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -118,7 +119,7 @@ public class UserController {
         ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
         //查缓存
         Page<User> userPage = (Page<User>) valueOperations.get(redisKey);
-        if (userPage != null){
+        if (userPage != null) {
             return ResultUtils.success(userPage);
         }
         //无缓存，查库
@@ -126,9 +127,9 @@ public class UserController {
         userPage = userService.page(new Page<>(pageNumber, pageSize), queryWrapper);
         //写缓存
         try {
-            valueOperations.set(redisKey, userPage,10000, TimeUnit.MILLISECONDS);
+            valueOperations.set(redisKey, userPage, 10000, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
-            log.error("Redis set key error",e);
+            log.error("Redis set key error", e);
         }
         return ResultUtils.success(userPage);
     }
@@ -165,4 +166,19 @@ public class UserController {
         return ResultUtils.success(userService.removeById(id));
     }
 
+    /**
+     * 获取最匹配的用户
+     *
+     * @param num,request
+     * @return
+     */
+    @GetMapping("/match")
+    public BaseResponse<List<UserVo>> matchUsers(long num, HttpServletRequest request) {
+        if (num <= 0 || num > 20) {
+            throw new BusinessException(ErrorCode.PARAM_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        List<UserVo> userList = userService.matchUsers(num, loginUser);
+        return ResultUtils.success(userList);
+    }
 }
