@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.util.Date;
+
+import com.jasper.user_center.model.vo.UserVo;
 import lombok.Data;
 
 /**

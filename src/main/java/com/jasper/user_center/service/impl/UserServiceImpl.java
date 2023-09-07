@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.jasper.user_center.common.ErrorCode;
+import com.jasper.user_center.common.PageRequest;
 import com.jasper.user_center.constant.UserConstant;
 import com.jasper.user_center.exception.BusinessException;
 import com.jasper.user_center.mapper.UserMapper;
@@ -16,9 +17,12 @@ import com.jasper.user_center.service.UserService;
 import com.jasper.user_center.utils.AlgorithmUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.yaml.snakeyaml.events.Event;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -26,6 +30,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.jasper.user_center.constant.UserConstant.ADMIN_ROLE;
 import static com.jasper.user_center.constant.UserConstant.USER_LOGIN_STATE;
@@ -284,30 +289,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return
      */
     @Override
-    public List<UserVo> matchUsers(long num, User loginUser) {
-        List<UserVo> userVolist = new ArrayList<>();
-        List<User> userList = this.list();
+    public List<UserVo> matchUsers(@RequestBody long num, User loginUser) {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.isNotNull("tags");
+        queryWrapper.select("id", "tags");
+        List<User> userList = this.list(queryWrapper);
         String tags = loginUser.getTags();
         Gson gson = new Gson();
         List<String> tagList = gson.fromJson(tags, new TypeToken<List<String>>() {
         }.getType());
         //用户列表的下标 => 相似度
-        SortedMap<Integer, Long> indexDistanceMap = new TreeMap<>();
-
+        List<Pair<User, Long>> list = new ArrayList<>();
         for (int i = 0; i < userList.size(); i++) {
             User user = userList.get(i);
             String userTags = user.getTags();
-            if (StringUtils.isBlank(userTags)) {
+            if (StringUtils.isBlank(userTags) || Objects.equals(loginUser.getId(), user.getId())) {
                 continue;
             }
             List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {
             }.getType());
             //计算分数
             long distance = AlgorithmUtils.minDistance(tagList, userTagList);
-            indexDistanceMap.put(i, distance);
+            list.add(Pair.of(user, distance));
         }
-        List<Integer> maxDistanceIndexList = indexDistanceMap.keySet().stream().limit(num).collect(Collectors.toList());
-        List<UserVo> userVoList = maxDistanceIndexList.stream().map(index -> getUserVO(userList.get(index))).collect(Collectors.toList());
+        List<Pair<User, Long>> topUserIdList = list.stream().sorted((a, b)->(int)(a.getSecond()-b.getSecond())).limit(num).collect(Collectors.toList());
+        List<UserVo> userVolist = new ArrayList<>();
+        for (Pair<User, Long> Pair : topUserIdList) {
+            userVolist.add(this.getUserVO(this.getById(Pair.getFirst())));
+        }
         return userVolist;
     }
 
