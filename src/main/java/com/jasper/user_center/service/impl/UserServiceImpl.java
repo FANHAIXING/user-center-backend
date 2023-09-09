@@ -209,8 +209,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         //查询所有用户
         List<User> userList = userMapper.selectList(queryWrapper);
         Gson gson = new Gson();
-
-
         //内存中判断是否包含要求标签
         return userList.stream().filter(user -> {
             String tagStr = user.getTags();
@@ -344,6 +342,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public UserVo getUserVO(User user) {
         UserVo userVo = new UserVo();
+        userVo.setUsername(user.getUsername());
         userVo.setUserAccount(user.getUserAccount());
         userVo.setUserRole(user.getUserRole());
         userVo.setId(user.getId());

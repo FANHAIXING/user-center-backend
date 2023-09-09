@@ -3,11 +3,8 @@ package com.jasper.user_center.model.vo;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.jasper.user_center.model.domain.User;
 import lombok.Data;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -18,8 +15,8 @@ import java.util.Date;
  */
 @Data
 public class UserVo implements Serializable {
-    @Serial
-    private static final long serialVersionUID = -4700118564360298958L;
+
+    private static final long serialVersionUID = 8875127907799914710L;
     /**
      *
      */

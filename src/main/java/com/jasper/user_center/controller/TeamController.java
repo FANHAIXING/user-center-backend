@@ -32,6 +32,7 @@ import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -107,9 +108,19 @@ public class TeamController {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         User loginUser = userService.getLoginUser(request);
-        boolean isAdmin = userService.isAdmin(request);
-        List<TeamUserVo> list = teamService.listTeams(teamQuery, loginUser);
-        return ResultUtils.success(list);
+        List<TeamUserVo> teamList = teamService.listTeams(teamQuery, loginUser);
+        //判断当前用于是否已经加入队伍
+        List<Long> teamIdList = teamList.stream().map(TeamUserVo::getId).collect(Collectors.toList());
+        QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
+        userTeamQueryWrapper.eq("userId", loginUser.getId());
+        userTeamQueryWrapper.in("teamId", teamIdList);
+        List<UserTeam> userTeamList = userTeamService.list(userTeamQueryWrapper);
+        //已加入的队伍Id集合
+        Set<Long> hasJoinTeamIdSet = userTeamList.stream().map(UserTeam::getTeamId).collect(Collectors.toSet());
+        teamList.forEach(team->{
+            team.setHasJoin(hasJoinTeamIdSet.contains(team.getId()));
+        });
+        return ResultUtils.success(teamList);
     }
 
     @GetMapping("/list/page")
@@ -140,7 +151,7 @@ public class TeamController {
     }
 
     @PostMapping("/quit")
-    public BaseResponse<Boolean> quitTeam(@RequestBody TeamQuitRequest teamQuitRequest,HttpServletRequest request){
+    public BaseResponse<Boolean> quitTeam(@RequestBody TeamQuitRequest teamQuitRequest, HttpServletRequest request) {
         if (teamQuitRequest == null) {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
@@ -155,7 +166,7 @@ public class TeamController {
             throw new BusinessException(ErrorCode.PARAM_ERROR);
         }
         User loginUser = userService.getLoginUser(request);
-        boolean result = teamService.deleteTeam(deleteRequest.getId(),loginUser);
+        boolean result = teamService.deleteTeam(deleteRequest.getId(), loginUser);
         if (!result) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除失败");
         }
@@ -164,6 +175,7 @@ public class TeamController {
 
     /**
      * 获取我创建的队伍
+     *
      * @param teamQuery
      * @param request
      * @return
@@ -181,6 +193,7 @@ public class TeamController {
 
     /**
      * 获取我加入的队伍
+     *
      * @param teamQuery
      * @param request
      * @return
@@ -192,7 +205,7 @@ public class TeamController {
         }
         User loginUser = userService.getLoginUser(request);
         QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("UserId",loginUser.getId());
+        queryWrapper.eq("UserId", loginUser.getId());
         List<UserTeam> userTeamList = userTeamService.list(queryWrapper);
         // 取出不重复的队伍id
         Map<Long, List<UserTeam>> listMap = userTeamList.stream().collect(Collectors.groupingBy(UserTeam::getTeamId));

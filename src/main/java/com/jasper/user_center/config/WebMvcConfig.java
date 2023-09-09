@@ -12,7 +12,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         //设置允许跨域的路径
         registry.addMapping("/**")
                 //设置允许跨域请求的域名
-                .allowedOrigins("https://localhost:8000.com")
+                .allowedOrigins("https://localhost:8000")
                 .allowCredentials(true)
                 .allowedMethods("*")
                 .maxAge(3600);

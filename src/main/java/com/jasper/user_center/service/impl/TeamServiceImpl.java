@@ -3,6 +3,7 @@ package com.jasper.user_center.service.impl;
 import java.util.Date;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.jasper.user_center.common.ErrorCode;
 import com.jasper.user_center.mapper.UserMapper;
@@ -24,12 +25,16 @@ import com.jasper.user_center.service.UserTeamService;
 import lombok.SneakyThrows;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Jasper
@@ -48,6 +53,9 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
 
     @Resource
     private UserMapper userMapper;
+
+    @Resource
+    private RedissonClient redissonClient;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -201,7 +209,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
                 BeanUtils.copyProperties(userVo, user);
                 teamUserVo.setCreateUser(userVo);
             }
-
+            //查询成员信息
             List<User> memberUser = userMapper.getMemberUsersByTeamId(teamId);
             List<UserVo> memberUserVo = new ArrayList<>();
             for (User user1 : memberUser) {
@@ -210,6 +218,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
                 memberUserVo.add(memberUserVo1);
             }
             teamUserVo.setMemberUser(memberUserVo);
+            //成员用户数量
+            teamUserVo.setUserNum((long) memberUserVo.size());
             teamUserVoList.add(teamUserVo);
         }
         return teamUserVoList;
@@ -224,7 +234,7 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
         Long id = teamUpdateRequest.getId();
         Team oldTeam = this.getTeamById(id);
         //只有管理员或者队伍的创建者才可以修改
-        if (oldTeam.getUserId() != loginUser.getId() && !userService.isAdmin(loginUser)) {
+        if (!Objects.equals(oldTeam.getUserId(), loginUser.getId()) && !userService.isAdmin(loginUser)) {
             throw new BusinessException(ErrorCode.NO_AUTH);
         }
         TeamStatusEnum statusEnum = TeamStatusEnum.getEnumByValue(teamUpdateRequest.getStatus());
@@ -268,31 +278,46 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             throw new BusinessException(ErrorCode.PARAM_ERROR, "队伍创建人无法加入队伍");
         }
         // 该用户已加入的队伍数量
-        QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
-        userTeamQueryWrapper.eq("userId", userId);
-        if (userTeamService.count(userTeamQueryWrapper) >= 5) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "最多加入五个队伍");
+        //只有一个线程能获取锁
+        RLock lock = redissonClient.getLock("Jasper:join_team");
+        try {
+            while(true){
+                if (lock.tryLock(0, 30000L, TimeUnit.MILLISECONDS)) {
+                    QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
+                    userTeamQueryWrapper.eq("userId", userId);
+                    if (userTeamService.count(userTeamQueryWrapper) >= 5) {
+                        throw new BusinessException(ErrorCode.PARAM_ERROR, "最多加入五个队伍");
+                    }
+                    //不能重复加入已经加入的队伍
+                    userTeamQueryWrapper = new QueryWrapper<>();
+                    userTeamQueryWrapper.eq("teamId", teamId);
+                    userTeamQueryWrapper.eq("userId", userId);
+                    long hasUserJoinTeam = userTeamService.count(userTeamQueryWrapper);
+                    if (hasUserJoinTeam >= 1) {
+                        throw new BusinessException(ErrorCode.PARAM_ERROR, "已加入该队伍");
+                    }
+                    // 已加入队伍的人数
+                    long teamHasJoinNum = countTeamUserByTeamID(teamId);
+                    if (teamHasJoinNum >= team.getMaxNum()) {
+                        throw new BusinessException(ErrorCode.PARAM_ERROR, "队伍已满");
+                    }
+                    //修改用户队伍信息
+                    UserTeam userTeam = new UserTeam();
+                    userTeam.setUserId(userId);
+                    userTeam.setTeamId(teamId);
+                    userTeam.setJoinTime(new Date());
+                    return userTeamService.save(userTeam);
+                }
+            }
+        } catch (InterruptedException e) {
+            log.error("join team error", e);
+            return false;
+        } finally {
+            //只能释放自己加的锁
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
-        //不能重复加入已经加入的队伍
-        userTeamQueryWrapper = new QueryWrapper<>();
-        userTeamQueryWrapper.eq("teamId", teamId);
-        userTeamQueryWrapper.eq("userId", userId);
-        long hasUserJoinTeam = userTeamService.count(userTeamQueryWrapper);
-        if (hasUserJoinTeam >= 1) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "已加入该队伍");
-        }
-        // 已加入队伍的人数
-        long teamHasJoinNum = countTeamUserByTeamID(teamId);
-        if (teamHasJoinNum >= team.getMaxNum()) {
-            throw new BusinessException(ErrorCode.PARAM_ERROR, "队伍已满");
-        }
-        //修改用户队伍信息
-        UserTeam userTeam = new UserTeam();
-        userTeam.setUserId(userId);
-        userTeam.setTeamId(teamId);
-        userTeam.setJoinTime(new Date());
-        return userTeamService.save(userTeam);
-
     }
 
     @Override

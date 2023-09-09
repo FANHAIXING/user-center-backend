@@ -1,15 +1,9 @@
 package com.jasper.user_center.model.dto;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.jasper.user_center.common.PageRequest;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.io.Serial;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -20,7 +14,6 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class TeamQuery extends PageRequest {
-    @Serial
     private static final long serialVersionUID = 768702861294562082L;
     /**
      * id

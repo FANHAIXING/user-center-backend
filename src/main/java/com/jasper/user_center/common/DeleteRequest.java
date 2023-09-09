@@ -2,7 +2,6 @@ package com.jasper.user_center.common;
 
 import lombok.Data;
 
-import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -12,7 +11,7 @@ import java.io.Serializable;
  */
 @Data
 public class DeleteRequest implements Serializable {
-    @Serial
+
     private static final long serialVersionUID = -6629787169635223960L;
 
     /**

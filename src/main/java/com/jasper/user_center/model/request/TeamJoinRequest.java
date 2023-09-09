@@ -2,9 +2,7 @@ package com.jasper.user_center.model.request;
 
 import lombok.Data;
 
-import java.io.Serial;
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * @author Jasper
@@ -12,7 +10,7 @@ import java.util.Date;
  */
 @Data
 public class TeamJoinRequest implements Serializable {
-    @Serial
+
     private static final long serialVersionUID = -7689583177926670235L;
     /**
      * id

@@ -43,7 +43,6 @@ public class PreCacheJob {
     //每天执行，预热推荐用户
     @Scheduled(cron = "0 49 15 * * *")
     public void doCacheRecommendUser() {
-
         RLock lock = redissonClient.getLock("Jasper:precachejob:docache:lock");
         try {
             //只有一个线程能获取锁
@@ -69,8 +68,7 @@ public class PreCacheJob {
                 lock.unlock();
             }
         }
-
-
     }
+
 
 }

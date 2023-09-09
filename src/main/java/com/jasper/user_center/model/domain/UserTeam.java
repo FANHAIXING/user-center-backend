@@ -8,9 +8,10 @@ import java.util.Date;
 
 /**
  * 用户队伍关系
+ *
  * @TableName user_team
  */
-@TableName(value ="user_team")
+@TableName(value = "user_team")
 @Data
 public class UserTeam implements Serializable {
     /**
@@ -40,7 +41,7 @@ public class UserTeam implements Serializable {
     private Date createTime;
 
     /**
-     * 
+     *
      */
     private Date updateTime;
 

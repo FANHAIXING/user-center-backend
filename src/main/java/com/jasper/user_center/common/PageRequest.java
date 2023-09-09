@@ -1,8 +1,5 @@
 package com.jasper.user_center.common;
-
 import lombok.Data;
-
-import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -14,7 +11,6 @@ import java.io.Serializable;
 @Data
 public class PageRequest implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1424715155126071542L;
 
     /**

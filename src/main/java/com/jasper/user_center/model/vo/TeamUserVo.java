@@ -1,24 +1,19 @@
 package com.jasper.user_center.model.vo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
-
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
 /**
  * 队伍和用户信息封装类
+ *
  * @author Jasper
  * @create 2023-08-30 15:10
  */
 @Data
 public class TeamUserVo implements Serializable {
-    @Serial
+
     private static final long serialVersionUID = -3818404495644926101L;
     /**
      * 队伍Id
@@ -61,7 +56,7 @@ public class TeamUserVo implements Serializable {
     private Date createTime;
 
     /**
-     *更新时间
+     * 更新时间
      */
     private Date updateTime;
 
@@ -75,4 +70,14 @@ public class TeamUserVo implements Serializable {
      * 成员用户信息
      */
     List<UserVo> memberUser;
+
+    /**
+     * 成员用户数
+     */
+    Long userNum;
+
+    /**
+     * 用户是否已加入队伍
+     */
+    private boolean hasJoin = false;
 }
